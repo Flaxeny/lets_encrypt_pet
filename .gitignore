@@ -1,11 +1,11 @@
 terraform/phase2/variables.tf
 terraform/phase1/terraform.tfvars
 terraform/terraform.tfstate
-terraform/phase1/.terraform
+terraform/phase1/.terraform/
 terraform/phase1/.terraform.lock.hcl
 terraform/phase1/terraform.tfstate
 terraform/phase1/terraform.tfstate.backup
-terraform/phase2/.terraform
+terraform/phase2/.terraform/
 terraform/phase2/.terraform.lock.hcl
 terraform/phase2/terraform.tfstate
 terraform/phase2/terraform.tfstate.backup
