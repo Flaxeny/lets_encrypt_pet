@@ -19,12 +19,18 @@ jobs:
         with:
           version: 'v1.29.0'
 
-      - name: Install doctl
-        run: |
-          curl -sSL -o doctl https://github.com/digitalocean/doctl/releases/latest/download/doctl-linux-amd64
-          chmod +x doctl
-          sudo mv doctl /usr/local/bin/
-          doctl version
+    - name: Install doctl
+      run: |
+        LATEST_VERSION=$(curl -s https://api.github.com/repos/digitalocean/doctl/releases/latest | grep tag_name | cut -d '"' -f 4)
+        echo "Latest doctl version: $LATEST_VERSION"
+    
+        curl -sL -o doctl.tar.gz https://github.com/digitalocean/doctl/releases/download/${LATEST_VERSION}/doctl-${LATEST_VERSION}-linux-amd64.tar.gz
+    
+        tar -xzf doctl.tar.gz
+        sudo mv doctl /usr/local/bin/
+        rm doctl.tar.gz
+    
+        doctl version
 
 
       - name: Doctl Auth
