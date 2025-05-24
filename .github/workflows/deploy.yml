@@ -19,6 +19,12 @@ jobs:
         with:
           version: 'v1.29.0'
 
+      - name: Install doctl
+        run: |
+          curl -sL https://github.com/digitalocean/doctl/releases/latest/download/doctl-linux-amd64.tar.gz | tar -xz
+          sudo mv doctl /usr/local/bin
+          doctl version
+
       - name: Doctl Auth
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
@@ -48,7 +54,7 @@ jobs:
         run: |
           argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
 
-      - name: Sync Argo CD Application
+      - name: Sync Argo CD Applications
         env:
           ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
         run: |
