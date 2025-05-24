@@ -1,1 +1,2 @@
-terraform/terraform.tfvars
+terraform/phase2/variables.tf
+terraform/phase1/terraform.tfvars

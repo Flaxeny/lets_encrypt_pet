@@ -1,0 +1,57 @@
+name: Deploy to DOKS
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
+
+      - name: Doctl Auth
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
+        run: |
+          doctl auth init -t "$DIGITALOCEAN_TOKEN"
+
+      - name: Run deploy.sh
+        env:
+          TF_VAR_do_token:        ${{ secrets.DO_TOKEN }}
+          TF_VAR_region:          ${{ secrets.DO_REGION }}
+          TF_VAR_cluster_name:    ${{ secrets.CLUSTER_NAME }}
+          TF_VAR_email:           ${{ secrets.LETSENCRYPT_EMAIL }}
+        run: |
+          chmod +x scripts/deploy.sh
+          ./scripts/deploy.sh
+
+      - name: Install Argo CD CLI
+        run: |
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin/
+
+      - name: Login to Argo CD
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
+        run: |
+          argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
+
+      - name: Sync Argo CD Application
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+        run: |
+          argocd app sync nga-bootstrap --server $ARGOCD_SERVER --insecure
+          argocd app sync cluster-issuer --server $ARGOCD_SERVER --insecure
+
