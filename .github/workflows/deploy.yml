@@ -9,32 +9,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.6
 
       - name: Setup kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'v1.29.0'
 
-      - name: Install doctl
+      - name: Install doctl (DigitalOcean CLI)
         run: |
-          LATEST_VERSION=$(curl -s https://api.github.com/repos/digitalocean/doctl/releases/latest | grep tag_name | cut -d '"' -f 4)
-          echo "Latest doctl version: $LATEST_VERSION"
-          curl -sL "https://github.com/digitalocean/doctl/releases/download/${LATEST_VERSION}/doctl-${LATEST_VERSION}-linux-amd64.tar.gz" -o doctl.tar.gz
+          DOCTL_VERSION="v1.127.0"
+          curl -sL "https://github.com/digitalocean/doctl/releases/download/${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz" -o doctl.tar.gz
           tar -xzf doctl.tar.gz
           sudo mv doctl /usr/local/bin/
           doctl version
 
-      - name: Doctl Auth
+      - name: Authenticate doctl
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
         run: |
           doctl auth init -t "$DIGITALOCEAN_TOKEN"
 
-      - name: Run deploy.sh
+      - name: Run deploy.sh (Terraform Phase 1 + Phase 2)
         env:
           TF_VAR_do_token:        ${{ secrets.DO_TOKEN }}
           TF_VAR_region:          ${{ secrets.DO_REGION }}
@@ -49,4 +51,5 @@ jobs:
           curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
           chmod +x argocd
           sudo mv argocd /usr/local/bin/
+          argocd version
 
