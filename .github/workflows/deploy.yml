@@ -21,9 +21,11 @@ jobs:
 
       - name: Install doctl
         run: |
-          curl -sL https://github.com/digitalocean/doctl/releases/latest/download/doctl-linux-amd64.tar.gz | tar -xz
-          sudo mv doctl /usr/local/bin
+          curl -sSL -o doctl https://github.com/digitalocean/doctl/releases/latest/download/doctl-linux-amd64
+          chmod +x doctl
+          sudo mv doctl /usr/local/bin/
           doctl version
+
 
       - name: Doctl Auth
         env:
