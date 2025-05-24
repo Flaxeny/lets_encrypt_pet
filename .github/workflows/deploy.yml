@@ -24,11 +24,10 @@ jobs:
           LATEST_VERSION=$(curl -s https://api.github.com/repos/digitalocean/doctl/releases/latest | grep tag_name | cut -d '"' -f 4)
           echo "Latest doctl version: $LATEST_VERSION"
 
-          curl -sL -o doctl.tar.gz https://github.com/digitalocean/doctl/releases/download/${LATEST_VERSION}/doctl-${LATEST_VERSION}-linux-amd64.tar.gz
+          curl -sSL -o doctl https://github.com/digitalocean/doctl/releases/download/${LATEST_VERSION}/doctl-linux-amd64
 
-          tar -xzf doctl.tar.gz
+          chmod +x doctl
           sudo mv doctl /usr/local/bin/
-          rm doctl.tar.gz
 
           doctl version
 
