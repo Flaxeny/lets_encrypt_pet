@@ -19,19 +19,18 @@ jobs:
         with:
           version: 'v1.29.0'
 
-    - name: Install doctl
-      run: |
-        LATEST_VERSION=$(curl -s https://api.github.com/repos/digitalocean/doctl/releases/latest | grep tag_name | cut -d '"' -f 4)
-        echo "Latest doctl version: $LATEST_VERSION"
-    
-        curl -sL -o doctl.tar.gz https://github.com/digitalocean/doctl/releases/download/${LATEST_VERSION}/doctl-${LATEST_VERSION}-linux-amd64.tar.gz
-    
-        tar -xzf doctl.tar.gz
-        sudo mv doctl /usr/local/bin/
-        rm doctl.tar.gz
-    
-        doctl version
+      - name: Install doctl
+        run: |
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/digitalocean/doctl/releases/latest | grep tag_name | cut -d '"' -f 4)
+          echo "Latest doctl version: $LATEST_VERSION"
 
+          curl -sL -o doctl.tar.gz https://github.com/digitalocean/doctl/releases/download/${LATEST_VERSION}/doctl-${LATEST_VERSION}-linux-amd64.tar.gz
+
+          tar -xzf doctl.tar.gz
+          sudo mv doctl /usr/local/bin/
+          rm doctl.tar.gz
+
+          doctl version
 
       - name: Doctl Auth
         env:
@@ -54,18 +53,4 @@ jobs:
           curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
           chmod +x argocd
           sudo mv argocd /usr/local/bin/
-
-      - name: Login to Argo CD
-        env:
-          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
-          ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
-        run: |
-          argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
-
-      - name: Sync Argo CD Applications
-        env:
-          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
-        run: |
-          argocd app sync nga-bootstrap --server $ARGOCD_SERVER --insecure
-          argocd app sync cluster-issuer --server $ARGOCD_SERVER --insecure
 
