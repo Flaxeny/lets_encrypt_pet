@@ -22,15 +22,23 @@ jobs:
         with:
           version: 'v1.29.0'
 
-      - name: Install doctl (DigitalOcean CLI)
+      - name: Download and install doctl v1.127.0
         run: |
-          DOCTL_VERSION="v1.127.0"
-          curl -sL "https://github.com/digitalocean/doctl/releases/download/${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz" -o doctl.tar.gz
-          mkdir doctl-tmp
-          tar -xzf doctl.tar.gz -C doctl-tmp
-          sudo mv doctl-tmp/doctl /usr/local/bin/
+          DOCTL_VERSION="1.127.0"
+          URL="https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz"
+          
+          echo "Downloading doctl from $URL"
+          
+          curl -sL "$URL" -o doctl.tar.gz || { echo "Failed to download doctl"; exit 1; }
+          
+          mkdir -p doctl-tmp
+          tar -xzf doctl.tar.gz -C doctl-tmp || { echo "Failed to extract archive"; exit 1; }
+          
+          sudo mv doctl-tmp/doctl /usr/local/bin/ || { echo "Failed to move doctl binary"; exit 1; }
+          
+          rm -rf doctl.tar.gz doctl-tmp
+          
           doctl version
-
 
       - name: Authenticate doctl
         env:
