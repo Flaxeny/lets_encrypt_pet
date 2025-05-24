@@ -26,9 +26,11 @@ jobs:
         run: |
           DOCTL_VERSION="v1.127.0"
           curl -sL "https://github.com/digitalocean/doctl/releases/download/${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz" -o doctl.tar.gz
-          tar -xzf doctl.tar.gz
-          sudo mv doctl /usr/local/bin/
+          mkdir doctl-tmp
+          tar -xzf doctl.tar.gz -C doctl-tmp
+          sudo mv doctl-tmp/doctl /usr/local/bin/
           doctl version
+
 
       - name: Authenticate doctl
         env:
