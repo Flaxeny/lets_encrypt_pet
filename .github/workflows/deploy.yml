@@ -35,14 +35,16 @@ jobs:
           rm -rf doctl.tar.gz doctl-tmp
           doctl version
 
-      - name: Authenticate doctl
+      - name: Authenticate and fetch kubeconfig
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
         run: |
           doctl auth init -t "$DIGITALOCEAN_TOKEN"
-          doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }}
+          doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }} --set-current-context
+          mkdir -p terraform/phase2
+          cp ~/.kube/config terraform/phase2/kubeconfig
 
-      - name: Run Terraform Phase 2 (Cert-Manager automation)
+      - name: Run Terraform Phase 2 (Cert-Manager ClusterIssuer)
         env:
           TF_VAR_email: ${{ secrets.LETSENCRYPT_EMAIL }}
         run: |
