@@ -15,21 +15,29 @@
 git clone https://github.com/<your-org-or-user>/<your-repo>.git
 cd <your-repo>/phase1
 
+---
+
 ### 2. Инициализируйте Terraform
 
 ```bash
 terraform init
+
+---
 
 ### 3. Примените конфигурацию
 
 ```bash
 terraform apply -auto-approve
 
+---
+
 ### 4. Экспортируйте kubeconfig
 
 ```bash
 terraform output -raw kubeconfig_raw > ~/.kube/config
 chmod 600 ~/.kube/config
+
+---
 
 ## Фаза 2: Установка Cert-Manager и ClusterIssuer вручную
 
@@ -39,6 +47,8 @@ chmod 600 ~/.kube/config
 ```bash
 chmod +x .scripts/deploy.sh
 .scripts/deploy.sh
+
+---
 
 ### Зависимости
 
