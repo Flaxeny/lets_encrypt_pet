@@ -21,11 +21,6 @@ provider "helm" {
   }
 }
 
-resource "kubernetes_namespace" "cert_manager" {
-  metadata {
-    name = "cert-manager"
-  }
-}
 
 resource "helm_release" "cert_manager" {
   name       = "cert-manager"
