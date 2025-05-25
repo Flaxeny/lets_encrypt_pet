@@ -1,49 +1,50 @@
-# Руководство по ручному развёртыванию Phase 1
+#  Руководство по ручному развёртыванию проекта Let's Encrypt в DOKS
 
-В этом руководстве описано, как вручную выполнить развёртывание инфраструктуры из каталога `phase1` с помощью Terraform.
+Этот проект состоит из двух фаз:
+
+- **Phase 1** — развёртывание DOKS кластера и базовой инфраструктуры через Terraform.
+- **Phase 2** — установка Cert-Manager и ClusterIssuer для автоматического управления TLS-сертификатами.
 
 ---
 
-## Шаг 1. Клонирование репозитория
+##  Фаза 1: Развёртывание DOKS кластера вручную
 
-Если у вас ещё нет репозитория с проектом, клонируйте его:
+### 1. Клонируйте репозиторий
 
 ```bash
-git clone <URL_ВАШЕГО_РЕПОЗИТОРИЯ>
-cd <ИМЯ_РЕПОЗИТОРИЯ>/phase1
+git clone https://github.com/<your-org-or-user>/<your-repo>.git
+cd <your-repo>/phase1
 
-## Шаг 2. Инициализация Terraform
-
-Перейдите в директорию phase1 и инициализируйте Terraform:
+### 2. Инициализируйте Terraform
 
 ```bash
 terraform init
 
-## Шаг 3. Применение инфраструктуры
-
-Запустите применение конфигурации Terraform:
+### 3. Примените конфигурацию
 
 ```bash
 terraform apply -auto-approve
 
-##Шаг 4. Экспорт kubeconfig
-
-Для взаимодействия с Kubernetes кластером экспортируйте kubeconfig:
+### 4. Экспортируйте kubeconfig
 
 ```bash
 terraform output -raw kubeconfig_raw > ~/.kube/config
 chmod 600 ~/.kube/config
 
-ЛИБО
+## Фаза 2: Установка Cert-Manager и ClusterIssuer вручную
 
-## Запуск автоматизированного скрипта
+### Убедитесь, что ~/.kube/config корректно настроен и вы подключены к кластеру перед выполнением этого этапа.
+### 1. Запустите скрипт установки
 
 ```bash
+chmod +x .scripts/deploy.sh
 .scripts/deploy.sh
 
-## Примечание: Убедитесь, что у скрипта есть права на выполнение:
+### Зависимости
 
-```bash
-chmod +x deploy_phase1.sh
+Убедитесь, что у вас установлены:
 
-
+Terraform >= v1.0
+kubectl
+doctl (DigitalOcean CLI)
+Аккаунт в DigitalOcean и API токен

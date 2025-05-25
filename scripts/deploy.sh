@@ -1,20 +1,44 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
-echo "[Phase 2] Applying Terraform (Cert-Manager ClusterIssuer)…"
+PHASE_DIR="terraform/phase2"
+KUBECONFIG_PATH="$HOME/.kube/config"
 
-cd terraform/phase2
+echo -e "\n [Phase 2] Установка Cert-Manager и ClusterIssuer через Terraform…"
 
-# Проверка, что kubeconfig существует
-if [ ! -f ~/.kube/config ]; then
-  echo "❌ kubeconfig не найден. Убедитесь, что вы выполнили doctl kubernetes cluster kubeconfig save <cluster-name>"
+# Проверка наличия terraform
+if ! command -v terraform &> /dev/null; then
+  echo " Terraform не установлен. Установите его и повторите попытку."
   exit 1
 fi
 
-terraform init
+# Проверка наличия kubectl
+if ! command -v kubectl &> /dev/null; then
+  echo " kubectl не установлен. Установите его и повторите попытку."
+  exit 1
+fi
+
+# Проверка наличия kubeconfig
+if [ ! -f "$KUBECONFIG_PATH" ]; then
+  echo " kubeconfig не найден. Выполните:"
+  echo "   doctl kubernetes cluster kubeconfig save <cluster-name>"
+  exit 1
+fi
+
+# Проверка подключения к кластеру
+if ! kubectl cluster-info &> /dev/null; then
+  echo " Не удалось подключиться к кластеру. Проверьте kubeconfig."
+  exit 1
+fi
+
+# Переход в директорию с Terraform
+cd "$PHASE_DIR"
+
+# Инициализация и применение
+terraform init -input=false
 terraform apply -auto-approve
 
-cd ..
+cd - > /dev/null
 
-echo "✅ Cert-Manager и ClusterIssuer применены!"
+echo -e "\n Cert-Manager и ClusterIssuer успешно применены!"
 
