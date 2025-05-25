@@ -33,15 +33,11 @@ resource "helm_release" "cert_manager" {
     name  = "installCRDs"
     value = "true"
   }
-
-  depends_on = [kubernetes_namespace.cert_manager]
 }
 
 resource "null_resource" "apply_cluster_issuer" {
   provisioner "local-exec" {
     command = "kubectl apply -f ${var.cluster_issuer_path} --kubeconfig ${path.module}/kubeconfig"
   }
-
-  depends_on = [helm_release.cert_manager]
 }
 
