@@ -2,11 +2,11 @@ terraform {
   required_providers {
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
+      version = "~> 2.23" # Актуальная версия для manifest
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.7"
+      version = "~> 2.12" # Обновленная версия
     }
   }
 }
@@ -21,11 +21,15 @@ provider "helm" {
   }
 }
 
-resource "helm_release" "cert_manager" {
-  name             = "cert-manager"
-  namespace        = "cert-manager"
-  create_namespace = true
+resource "kubernetes_namespace" "cert_manager" {
+  metadata {
+    name = "cert-manager"
+  }
+}
 
+resource "helm_release" "cert_manager" {
+  name       = "cert-manager"
+  namespace  = kubernetes_namespace.cert_manager.metadata[0].name
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
   version    = "v1.14.3"
@@ -35,15 +39,5 @@ resource "helm_release" "cert_manager" {
     value = "true"
   }
 
-
-  lifecycle {
-    ignore_changes = [repository, chart, version]
-  }
+  depends_on = [kubernetes_namespace.cert_manager]
 }
-
-resource "null_resource" "apply_cluster_issuer" {
-  provisioner "local-exec" {
-    command = "kubectl apply -f ${var.cluster_issuer_path} --kubeconfig ${path.module}/kubeconfig"
-  }
-}
-

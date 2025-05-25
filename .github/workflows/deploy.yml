@@ -44,6 +44,15 @@ jobs:
           mkdir -p terraform/phase2
           cp ~/.kube/config terraform/phase2/kubeconfig
 
+      - name: Import Existing Helm Release (if any)
+        run: |
+          cd terraform/phase2
+          terraform init
+          terraform import helm_release.cert_manager cert-manager/cert-manager || true
+          terraform import kubernetes_namespace.cert_manager cert-manager || true
+        env:
+          KUBECONFIG: terraform/phase2/kubeconfig    
+
       - name: Run Terraform Phase 2 (Cert-Manager + ClusterIssuer)
         env:
           TF_VAR_email: ${{ secrets.LETSENCRYPT_EMAIL }}
