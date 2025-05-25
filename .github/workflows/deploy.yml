@@ -50,5 +50,5 @@ jobs:
         run: |
           cd terraform/phase2
           terraform init
-          terraform apply -auto-approve -var="cluster_issuer_path=./terraform/manifests/cluster-issuer.yaml"
+          terraform apply -auto-approve
 
