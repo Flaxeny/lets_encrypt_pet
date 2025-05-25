@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/Flaxeny/lets_encrypt_pet.git
-    path: phase2
+    path: terraform/phase2
     targetRevision: master
   destination:
     server: https://kubernetes.default.svc
@@ -18,4 +18,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 

@@ -1,19 +1,20 @@
 #!/bin/bash
 set -e
 
-echo "[Phase 1] Applying Terraform (cluster + cert-manager)…"
-cd terraform/phase1
-terraform init
-terraform apply -auto-approve
-terraform output -raw kubeconfig > ~/.kube/config
-chmod 600 ~/.kube/config
-cd ..
+echo "[Phase 2] Applying Terraform (Cert-Manager ClusterIssuer)…"
 
-echo "[Phase 2] Applying Terraform (ClusterIssuer)…"
 cd terraform/phase2
+
+# Проверка, что kubeconfig существует
+if [ ! -f ~/.kube/config ]; then
+  echo "❌ kubeconfig не найден. Убедитесь, что вы выполнили doctl kubernetes cluster kubeconfig save <cluster-name>"
+  exit 1
+fi
+
 terraform init
 terraform apply -auto-approve
+
 cd ..
 
-echo "✅ All done!"
+echo "✅ Cert-Manager и ClusterIssuer применены!"
 

@@ -1,8 +1,10 @@
-name: Deploy to DOKS
+name: CertManager Automation
 
 on:
   push:
-    branches: [ master ]
+    paths:
+      - 'phase2/**'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   deploy:
@@ -26,18 +28,11 @@ jobs:
         run: |
           DOCTL_VERSION="1.127.0"
           URL="https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz"
-          
-          echo "Downloading doctl from $URL"
-          
-          curl -sL "$URL" -o doctl.tar.gz || { echo "Failed to download doctl"; exit 1; }
-          
+          curl -sL "$URL" -o doctl.tar.gz
           mkdir -p doctl-tmp
-          tar -xzf doctl.tar.gz -C doctl-tmp || { echo "Failed to extract archive"; exit 1; }
-          
-          sudo mv doctl-tmp/doctl /usr/local/bin/ || { echo "Failed to move doctl binary"; exit 1; }
-          
+          tar -xzf doctl.tar.gz -C doctl-tmp
+          sudo mv doctl-tmp/doctl /usr/local/bin/
           rm -rf doctl.tar.gz doctl-tmp
-          
           doctl version
 
       - name: Authenticate doctl
@@ -45,21 +40,13 @@ jobs:
           DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
         run: |
           doctl auth init -t "$DIGITALOCEAN_TOKEN"
+          doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }}
 
-      - name: Run deploy.sh (Terraform Phase 1 + Phase 2)
+      - name: Run Terraform Phase 2 (Cert-Manager automation)
         env:
-          TF_VAR_do_token:        ${{ secrets.DO_TOKEN }}
-          TF_VAR_region:          ${{ secrets.DO_REGION }}
-          TF_VAR_cluster_name:    ${{ secrets.CLUSTER_NAME }}
-          TF_VAR_email:           ${{ secrets.LETSENCRYPT_EMAIL }}
+          TF_VAR_email: ${{ secrets.LETSENCRYPT_EMAIL }}
         run: |
-          chmod +x scripts/deploy.sh
-          ./scripts/deploy.sh
-
-      - name: Install Argo CD CLI
-        run: |
-          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x argocd
-          sudo mv argocd /usr/local/bin/
-          argocd version
+          cd terraform/phase2
+          terraform init
+          terraform apply -auto-approve
 
