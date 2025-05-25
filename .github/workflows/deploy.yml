@@ -1,10 +1,9 @@
-name: CertManager Phase 2 Deployment
+name: CertManager Automation
 
 on:
   push:
     paths:
       - 'terraform/phase2/**'
-      - 'terraform/manifests/**'
       - '.github/workflows/deploy.yml'
 
 jobs:
@@ -25,7 +24,7 @@ jobs:
         with:
           version: 'v1.29.0'
 
-      - name: Install doctl
+      - name: Download and install doctl v1.127.0
         run: |
           DOCTL_VERSION="1.127.0"
           URL="https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz"
@@ -36,18 +35,20 @@ jobs:
           rm -rf doctl.tar.gz doctl-tmp
           doctl version
 
-      - name: Authenticate with DigitalOcean and fetch kubeconfig
+      - name: Authenticate and fetch kubeconfig
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
         run: |
           doctl auth init -t "$DIGITALOCEAN_TOKEN"
           doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }} --set-current-context
+          mkdir -p terraform/phase2
+          cp ~/.kube/config terraform/phase2/kubeconfig
 
-      - name: Terraform Apply for Phase 2
+      - name: Run Terraform Phase 2 (Cert-Manager + ClusterIssuer)
         env:
           TF_VAR_email: ${{ secrets.LETSENCRYPT_EMAIL }}
         run: |
           cd terraform/phase2
           terraform init
-          terraform apply -auto-approve
+          terraform apply -auto-approve -var="cluster_issuer_path=./terraform/manifests/cluster-issuer.yaml"
 
