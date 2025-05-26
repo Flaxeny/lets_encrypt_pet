@@ -10,3 +10,4 @@ terraform/phase2/.terraform.lock.hcl
 terraform/phase2/terraform.tfstate
 terraform/phase2/terraform.tfstate.backup
 terraform.tfstate
+terraform/phase1/kubeconfig.yaml
