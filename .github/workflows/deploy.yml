@@ -12,7 +12,6 @@ jobs:
 
     env:
       TF_VAR_email: ${{ secrets.LETSENCRYPT_EMAIL }}
-      KUBECONFIG: terraform/phase2/kubeconfig
 
     steps:
       - name: Checkout Repository
@@ -54,6 +53,7 @@ jobs:
 
       - name: Initialize Terraform and import resources (if not yet)
         run: |
+          export KUBECONFIG=terraform/phase2/kubeconfig
           cd terraform/phase2
           terraform init
           
