@@ -12,12 +12,15 @@ terraform {
 }
 
 data "terraform_remote_state" "phase1" {
-  backend = "local"
-
+  backend = "remote"
   config = {
-    path = "../phase1/terraform.tfstate"
+    organization = "letsencrypt-org"
+    workspaces = {
+      name = "letsencrypt-phase1"
+    }
   }
 }
+
 
 provider "kubernetes" {
   host                   = data.terraform_remote_state.phase1.outputs.cluster_endpoint
