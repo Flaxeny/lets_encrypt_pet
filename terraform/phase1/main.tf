@@ -2,15 +2,7 @@ terraform {
   required_providers {
     digitalocean = {
       source  = "digitalocean/digitalocean"
-      version = "~> 2.0"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.7"
+      version = "~> 2.34"
     }
   }
 }
@@ -31,38 +23,7 @@ resource "digitalocean_kubernetes_cluster" "letsencrypt_cluster" {
   }
 }
 
-provider "kubernetes" {
-  host                   = digitalocean_kubernetes_cluster.letsencrypt_cluster.endpoint
-  token                  = digitalocean_kubernetes_cluster.letsencrypt_cluster.kube_config[0].token
-  cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.letsencrypt_cluster.kube_config[0].cluster_ca_certificate)
+resource "local_file" "kubeconfig" {
+  filename = "${path.module}/kubeconfig.yaml"
+  content  = digitalocean_kubernetes_cluster.letsencrypt_cluster.kube_config[0].raw_config
 }
-
-provider "helm" {
-  kubernetes {
-    host                   = digitalocean_kubernetes_cluster.letsencrypt_cluster.endpoint
-    token                  = digitalocean_kubernetes_cluster.letsencrypt_cluster.kube_config[0].token
-    cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.letsencrypt_cluster.kube_config[0].cluster_ca_certificate)
-  }
-}
-
-resource "kubernetes_namespace" "cert_manager" {
-  metadata {
-    name = "cert-manager"
-  }
-}
-
-resource "helm_release" "cert_manager" {
-  name       = "cert-manager"
-  namespace  = kubernetes_namespace.cert_manager.metadata[0].name
-  repository = "https://charts.jetstack.io"
-  chart      = "cert-manager"
-  version    = "v1.14.3"
-
-  set {
-    name  = "installCRDs"
-    value = "true"
-  }
-
-  depends_on = [kubernetes_namespace.cert_manager]
-}
-

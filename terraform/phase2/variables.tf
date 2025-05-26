@@ -1,8 +1,5 @@
 variable "email" {
-  type = string
-}
-
-variable "cluster_issuer_path" {
-  description = "Path to the ClusterIssuer YAML manifest"
+  description = "Email address for Let's Encrypt registration"
   type        = string
 }
+

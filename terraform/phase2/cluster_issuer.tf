@@ -1,8 +1,11 @@
 resource "kubernetes_manifest" "cluster_issuer" {
-  manifest = yamldecode(file(var.cluster_issuer_path))
+  manifest = yamldecode(templatefile("${path.module}/cluster-issuer.yaml", {
+    email = var.email
+  }))
 
   depends_on = [
     helm_release.cert_manager,
     kubernetes_namespace.cert_manager
   ]
 }
+

@@ -2,22 +2,34 @@ terraform {
   required_providers {
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.23" # Актуальная версия для manifest
+      version = "~> 2.29"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.12" # Обновленная версия
+      version = "~> 2.13"
     }
   }
 }
 
+data "terraform_remote_state" "phase1" {
+  backend = "local"
+
+  config = {
+    path = "../phase1/terraform.tfstate"
+  }
+}
+
 provider "kubernetes" {
-  config_path = "${path.module}/kubeconfig"
+  host                   = data.terraform_remote_state.phase1.outputs.cluster_endpoint
+  token                  = data.terraform_remote_state.phase1.outputs.cluster_token
+  cluster_ca_certificate = base64decode(data.terraform_remote_state.phase1.outputs.cluster_ca)
 }
 
 provider "helm" {
   kubernetes {
-    config_path = "${path.module}/kubeconfig"
+    host                   = data.terraform_remote_state.phase1.outputs.cluster_endpoint
+    token                  = data.terraform_remote_state.phase1.outputs.cluster_token
+    cluster_ca_certificate = base64decode(data.terraform_remote_state.phase1.outputs.cluster_ca)
   }
 }
 
@@ -39,5 +51,14 @@ resource "helm_release" "cert_manager" {
     value = "true"
   }
 
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      set,
+      version
+    ]
+  }
+
   depends_on = [kubernetes_namespace.cert_manager]
 }
+
