@@ -15,20 +15,25 @@ jobs:
       KUBECONFIG: terraform/phase2/kubeconfig
 
     steps:
-      - name:  Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name:  Setup Terraform
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.6.6
 
-      - name:  Install kubectl
+      - name: Set Terraform Cloud token
+        run: echo "credentials \"app.terraform.io\" { token = \"$TFC_TOKEN\" }" > ~/.terraformrc
+        env:
+          TFC_TOKEN: ${{ secrets.TFC_TOKEN }}
+
+      - name: Install kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'v1.29.0'
 
-      - name:  Install doctl
+      - name: Install doctl
         run: |
           DOCTL_VERSION="1.127.0"
           curl -sL "https://github.com/digitalocean/doctl/releases/download/v${DOCTL_VERSION}/doctl-${DOCTL_VERSION}-linux-amd64.tar.gz" -o doctl.tar.gz
@@ -38,31 +43,30 @@ jobs:
           rm -rf doctl.tar.gz doctl-tmp
           doctl version
 
-      - name:  Authenticate with DigitalOcean and save kubeconfig
+      - name: Authenticate with DigitalOcean and save kubeconfig
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
         run: |
-          unset KUBECONFIG
           doctl auth init -t "$DIGITALOCEAN_TOKEN"
           doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }} --set-current-context
           mkdir -p terraform/phase2
           cp ~/.kube/config terraform/phase2/kubeconfig
 
-      - name:  Initialize Terraform and import resources (if not yet)
+      - name: Initialize Terraform and import resources (if not yet)
         run: |
           cd terraform/phase2
           terraform init
           
-          echo " Checking if cert-manager already exists..."
+          echo "Checking if cert-manager already exists..."
           if helm status cert-manager -n cert-manager > /dev/null 2>&1; then
-            echo " Helm release cert-manager exists. Importing into Terraform state..."
+            echo "Helm release cert-manager exists. Importing into Terraform state..."
             terraform import helm_release.cert_manager cert-manager/cert-manager || true
             terraform import kubernetes_namespace.cert_manager cert-manager || true
           else
-            echo " cert-manager not installed yet, Terraform will install it."
+            echo "cert-manager not installed yet, Terraform will install it."
           fi
 
-      - name:  Apply Terraform (Cert-Manager + ClusterIssuer)
+      - name: Apply Terraform (Cert-Manager + ClusterIssuer)
         run: |
           cd terraform/phase2
           terraform apply -auto-approve
