@@ -42,12 +42,11 @@ jobs:
         env:
           DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
         run: |
+          unset KUBECONFIG
           doctl auth init -t "$DIGITALOCEAN_TOKEN"
-          mkdir -p ~/.kube
           doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }} --set-current-context
           mkdir -p terraform/phase2
           cp ~/.kube/config terraform/phase2/kubeconfig
-          ls -l terraform/phase2/kubeconfig
 
       - name:  Initialize Terraform and import resources (if not yet)
         run: |
