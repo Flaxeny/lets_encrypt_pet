@@ -54,6 +54,8 @@ jobs:
       - name: Initialize Terraform and import resources (if not yet)
         run: |
           export KUBECONFIG=terraform/phase2/kubeconfig
+          export TF_LOG=DEBUG
+          export TF_LOG_PATH=./terraform.log
           cd terraform/phase2
           terraform init
           
