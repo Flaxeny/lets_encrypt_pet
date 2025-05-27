@@ -11,17 +11,27 @@ terraform {
   }
 }
 
+data "terraform_remote_state" "phase1" {
+  backend = "remote"
+  config = {
+    organization = "letsencrypt-org"
+    workspaces = {
+      name = "letsencrypt-phase1"
+    }
+  }
+}
+
 provider "kubernetes" {
-  host                   = var.cluster_endpoint
-  token                  = var.cluster_token
-  cluster_ca_certificate = base64decode(var.cluster_ca)
+  host                   = data.terraform_remote_state.phase1.outputs.cluster_endpoint
+  token                  = data.terraform_remote_state.phase1.outputs.cluster_token
+  cluster_ca_certificate = base64decode(data.terraform_remote_state.phase1.outputs.cluster_ca)
 }
 
 provider "helm" {
   kubernetes {
-    host                   = var.cluster_endpoint
-    token                  = var.cluster_token
-    cluster_ca_certificate = base64decode(var.cluster_ca)
+    host                   = data.terraform_remote_state.phase1.outputs.cluster_endpoint
+    token                  = data.terraform_remote_state.phase1.outputs.cluster_token
+    cluster_ca_certificate = base64decode(data.terraform_remote_state.phase1.outputs.cluster_ca)
   }
 }
 
@@ -53,5 +63,4 @@ resource "helm_release" "cert_manager" {
 
   depends_on = [kubernetes_namespace.cert_manager]
 }
-
 
