@@ -13,7 +13,4 @@ output "cluster_ca" {
   sensitive = true
 }
 
-output "cluster_name" {
-  value = data.terraform_remote_state.phase1.outputs.cluster_name
-}
 
