@@ -12,8 +12,8 @@
 ### 1. Клонируйте репозиторий
 
 ```bash
-git clone https://github.com/<your-org-or-user>/<your-repo>.git
-cd <your-repo>/phase1
+git clone https://github.com/Flaxeny/lets_encrypt_pet.git
+cd lets_encrypt_pet/terraform/phase1
 
 ---
 
