@@ -73,9 +73,3 @@ jobs:
           cd terraform/phase2
           terraform apply -auto-approve
 
-      - name: Upload Terraform logs
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: terraform-logs
-          path: terraform/phase2/terraform.log
