@@ -53,6 +53,9 @@ resource "helm_release" "cert_manager" {
     value = "true"
   }
 
+  wait      = true
+  timeout   = 300
+
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
