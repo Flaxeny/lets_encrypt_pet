@@ -54,12 +54,4 @@ resource "helm_release" "cert_manager" {
   depends_on = [kubernetes_namespace.cert_manager]
 }
 
-resource "kubernetes_manifest" "cluster_issuer" {
-  manifest = yamldecode(file("${path.module}/cluster-issuer.yaml"))
-
-  depends_on = [
-    helm_release.cert_manager,
-    kubernetes_namespace.cert_manager
-  ]
-}
 
