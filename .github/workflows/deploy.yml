@@ -51,23 +51,26 @@ jobs:
           mkdir -p terraform/phase2
           cp ~/.kube/config terraform/phase2/kubeconfig
 
-      - name: Initialize Terraform and import resources (if not yet)
+      - name: Terraform Init
         run: |
           export KUBECONFIG=terraform/phase2/kubeconfig
           cd terraform/phase2
           terraform init
-          
-          echo "Checking if cert-manager already exists..."
-          if helm status cert-manager -n cert-manager > /dev/null 2>&1; then
-            echo "Helm release cert-manager exists. Importing into Terraform state..."
-            terraform import helm_release.cert_manager cert-manager/cert-manager || true
-            terraform import kubernetes_namespace.cert_manager cert-manager || true
-          else
-            echo "cert-manager not installed yet, Terraform will install it."
-          fi
 
-      - name: Apply Terraform (Cert-Manager + ClusterIssuer)
+      - name: Apply Cert-Manager only
         run: |
+          export KUBECONFIG=terraform/phase2/kubeconfig
+          cd terraform/phase2
+          terraform apply -target=helm_release.cert_manager -auto-approve
+
+      - name: Wait for ClusterIssuer CRD
+        run: |
+          echo "Waiting 30s for ClusterIssuer CRD to be registered..."
+          sleep 30
+
+      - name: Apply full Terraform (ClusterIssuer)
+        run: |
+          export KUBECONFIG=terraform/phase2/kubeconfig
           cd terraform/phase2
           terraform apply -auto-approve
 
