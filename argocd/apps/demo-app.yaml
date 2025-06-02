@@ -1,18 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nga-bootstrap
+  name: demo-app
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   source:
     repoURL: https://github.com/Flaxeny/lets_encrypt_pet.git
-    path: terraform/phase1
+    path: terraform/demo-app
     targetRevision: master
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
-  syncPolicy: {}
+    namespace: demo-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
 

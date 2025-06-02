@@ -1,0 +1,26 @@
+name: Sync demo-app via Argo CD
+
+on:
+  workflow_run:
+    workflows: ["CertManager Automation"]
+    types:
+      - completed
+
+jobs:
+  sync:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Argo CD CLI
+        run: |
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin
+
+      - name: Sync demo-app
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+        run: |
+          argocd app sync demo-app --grpc-web --server "$ARGOCD_SERVER" --auth-token "$ARGOCD_AUTH_TOKEN"
+

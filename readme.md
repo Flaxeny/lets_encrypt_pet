@@ -1,60 +1,141 @@
-#  Руководство по ручному развёртыванию проекта Let's Encrypt в DOKS
+# Let's Encrypt Automation on DigitalOcean Kubernetes (DOKS)
 
-Этот проект состоит из двух фаз:
+This project automates SSL/TLS certificate management using Let's Encrypt and Cert-Manager on a Kubernetes cluster deployed on DigitalOcean using Terraform, Helm, GitHub Actions, and Argo CD.
 
-- **Phase 1** — развёртывание DOKS кластера и базовой инфраструктуры через Terraform.
-- **Phase 2** — установка Cert-Manager и ClusterIssuer для автоматического управления TLS-сертификатами.
+## 📦 Project Structure
+
+```
+lets_encrypt_pet/
+├── terraform/
+│   ├── phase1/                # Manual: creates the Kubernetes cluster (DOKS)
+│   ├── phase2/                # Automated via GitHub Actions
+│   │   ├── main.tf            # Cert-Manager, ClusterIssuer, nginx-ingress
+│   │   ├── cluster_issuer.tf
+│   │   └── demo-app/          # App with TLS via cert-manager
+│   └── demo-app.yaml          # Argo CD Application definition
+├── argocd/
+│   ├── cluster-bootstrap.yaml
+│   ├── cluster-issuer.yaml
+│   └── demo-app.yaml
+├── .github/
+│   └── workflows/
+│       └── deploy.yml         # GitHub Actions automation
+└── README.md
+```
 
 ---
 
-##  Фаза 1: Развёртывание DOKS кластера вручную
+## 🛠️ Phase 1: Manual Kubernetes Cluster Setup
 
-### 1. Клонируйте репозиторий
+1. **Initialize Terraform**:
+
+   ```bash
+   cd terraform/phase1
+   terraform init
+   ```
+2. **Apply Infrastructure**:
+
+   ```bash
+   terraform apply -auto-approve
+   ```
+
+This creates a DOKS cluster and outputs the `kubeconfig` for further use.
+
+---
+
+## ⚙️ Phase 2: Automated Deployment via GitHub Actions
+
+Everything from Phase 2 onward is fully automated on GitHub Actions:
+
+### What it does:
+
+* Installs `cert-manager` via Helm.
+* Installs `nginx-ingress` with DigitalOcean LoadBalancer support.
+* Creates a Let's Encrypt `ClusterIssuer`.
+* Syncs demo app (Ingress + TLS) via Argo CD.
+
+### Requirements:
+
+Ensure these GitHub secrets are set:
+
+* `DO_TOKEN` – DigitalOcean Personal Access Token
+* `CLUSTER_NAME` – Your DOKS cluster name
+* `DO_REGION` – DigitalOcean region
+* `LETSENCRYPT_EMAIL` – Email for Let's Encrypt ACME account
+* `TFC_TOKEN` – Terraform Cloud token
+* `ARGOCD_SERVER` – Argo CD API server address
+* `ARGOCD_AUTH_TOKEN` – Argo CD API token
+
+---
+
+## 🚀 Deployment Process
+
+1. Make sure Phase 1 has completed and kubeconfig is active.
+2. Push any changes to `terraform/phase2/` or `demo-app/`, and GitHub Actions will:
+
+   * Connect to the cluster
+   * Apply Helm releases (cert-manager, nginx-ingress)
+   * Apply `ClusterIssuer`
+   * Sync the demo app using Argo CD
+
+---
+
+## 🌐 DNS Configuration
+
+Make sure your domain `demo.example.com` points to the public IP of your `nginx-ingress` LoadBalancer:
 
 ```bash
-git clone https://github.com/Flaxeny/lets_encrypt_pet.git
-cd lets_encrypt_pet/terraform/phase1
+kubectl get svc -n ingress-nginx
+```
+
+Update DNS A record:
+
+```
+demo.example.com → <LoadBalancer IP>
+```
 
 ---
 
-### 2. Инициализируйте Terraform
+## ✅ Validation
+
+You can validate that everything works by visiting:
+
+```
+https://demo.example.com
+```
+
+The certificate should be issued by Let's Encrypt.
+
+Check certificate status:
 
 ```bash
-terraform init
+kubectl get certificate -n demo-app
+```
 
 ---
 
-### 3. Примените конфигурацию
+## 📎 Related Tools
+
+* [Terraform](https://www.terraform.io/)
+* [Cert-Manager](https://cert-manager.io/)
+* [Let's Encrypt](https://letsencrypt.org/)
+* [Argo CD](https://argo-cd.readthedocs.io/)
+* [DigitalOcean Kubernetes](https://www.digitalocean.com/products/kubernetes)
+
+---
+
+## 🧹 Cleanup
+
+To destroy the cluster (manual step):
 
 ```bash
-terraform apply -auto-approve
+cd terraform/phase1
+terraform destroy
+```
 
 ---
 
-### 4. Экспортируйте kubeconfig
+## 🙋 Need Help?
 
-```bash
-terraform output -raw kubeconfig_raw > ~/.kube/config
-chmod 600 ~/.kube/config
+Create an issue or open a PR in the [GitHub repo](https://github.com/Flaxeny/lets_encrypt_pet).
 
----
-
-## Фаза 2: Установка Cert-Manager и ClusterIssuer вручную
-
-### Убедитесь, что ~/.kube/config корректно настроен и вы подключены к кластеру перед выполнением этого этапа.
-### 1. Запустите скрипт установки
-
-```bash
-chmod +x .scripts/deploy.sh
-.scripts/deploy.sh
-
----
-
-### Зависимости
-
-Убедитесь, что у вас установлены:
-
-Terraform >= v1.0
-kubectl
-doctl (DigitalOcean CLI)
-Аккаунт в DigitalOcean и API токен

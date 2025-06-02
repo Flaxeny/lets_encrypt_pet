@@ -1,0 +1,45 @@
+# 1. Namespace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-app
+
+# 2. Deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server
+  namespace: demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo
+  template:
+    metadata:
+      labels:
+        app: echo
+    spec:
+      containers:
+        - name: echo
+          image: ealen/echo-server
+          ports:
+            - containerPort: 80
+
+# 3. Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-service
+  namespace: demo-app
+spec:
+  selector:
+    app: echo
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
